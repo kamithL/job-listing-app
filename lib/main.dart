@@ -1,30 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'core/theme/app_theme.dart';
+import 'core/utils/injection_container.dart';
+import 'presentation/blocs/favorites/favorites_event.dart';
+import 'presentation/blocs/theme/theme_bloc.dart';
+import 'presentation/blocs/theme/theme_event.dart';
+import 'presentation/blocs/theme/theme_state.dart';
+import 'presentation/pages/job_list_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await InjectionContainer.init();
+
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) =>
+              InjectionContainer.createThemeBloc()..add(LoadThemeEvent()),
+        ),
+        BlocProvider(create: (_) => InjectionContainer.createJobListBloc()),
+        BlocProvider(
+          create: (_) =>
+              InjectionContainer.createFavoritesBloc()
+                ..add(LoadFavoritesEvent()),
+        ),
+      ],
+      child: BlocBuilder<ThemeBloc, ThemeState>(
+        builder: (context, themeState) {
+          return MaterialApp(
+            title: 'Job Listing App',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeState.themeMode,
+            home: const JobListPage(),
+          );
+        },
       ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const Scaffold(
-              body: Center(
-                child: Text('Home Page'),
-              ),
-            ),
-        // Add other routes here
-      },
     );
   }
 }
-
